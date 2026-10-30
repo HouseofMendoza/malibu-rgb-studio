@@ -17,7 +17,7 @@ h1{font-size:30px;margin:32px 0 5px;letter-spacing:-1px}
 .sub,.muted{color:#858da0;font-size:12px}
 .card{background:#131722;border:1px solid #242b3b;border-radius:19px;padding:19px;margin-top:20px}
 .title{font-size:15px;font-weight:650}
-.preview{height:150px;border-radius:13px;margin-top:17px;background:#086bff;box-shadow:0 0 35px #4b43c855;transition:background .1s}
+.preview{height:150px;border-radius:13px;margin-top:17px;background:#086bff;box-shadow:0 0 35px #4b43c855}
 .preview-label{display:flex;justify-content:space-between;margin-top:13px;color:#aeb7c9;font-size:10px}
 .colors{display:grid;grid-template-columns:repeat(5,1fr);gap:9px;margin-top:18px}
 .color-box{text-align:center;font-size:10px;color:#929bad}
@@ -29,18 +29,21 @@ input[type=range]{width:100%;accent-color:#818cff;margin-top:14px}
 .buttons{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:20px}
 button{border:0;border-radius:12px;padding:15px;font-size:13px;font-weight:650;background:#242b3b;color:white}
 .primary{background:#747cff;color:white}
+button:disabled{opacity:.4}
 button:active{opacity:.75}
 .preset{padding:13px 0;border-bottom:1px solid #262d3a;display:flex;justify-content:space-between;align-items:center;font-size:12px}
 .preset:last-child{border:0}
 .preset button{padding:9px 12px;font-size:11px}
 .footer{text-align:center;color:#60697a;font-size:10px;margin-top:28px;letter-spacing:2px}
+#ble-status{font-size:12px;color:#aeb8c9;margin-top:14px;line-height:1.5}
+#hardwareColor{width:100%;height:60px;margin-top:15px}
 </style>
 </head>
 <body>
 <div class="app">
   <div class="top">
     <div class="logo">MALIBU / RGB STUDIO</div>
-    <div class="status">● PROTOTYPE 02</div>
+    <div class="status" id="topStatus">● PROTOTYPE 03</div>
   </div>
 
   <h1>Lighting Studio.</h1>
@@ -96,7 +99,22 @@ button:active{opacity:.75}
     </div>
   </div>
 
-  <div class="footer">MALIBU RGB STUDIO · CONCEPT 002</div>
+  <div class="card" id="bluetooth">
+    <div class="title">Malibu Bluetooth Control</div>
+    <div class="muted">CONNECT TO YOUR ACTUAL LIGHTS</div>
+    <div class="buttons">
+      <button class="primary" id="bleConnect">CONNECT TO LIGHTS</button>
+      <button id="bleDisconnect" disabled>DISCONNECT</button>
+    </div>
+    <div id="ble-status">Not connected</div>
+    <hr style="border-color:#262d3a;margin:20px 0">
+    <div class="title">Hardware color test</div>
+    <div class="muted">CHOOSE A COLOR TO SEND TO YOUR MALIBU</div>
+    <input id="hardwareColor" type="color" value="#ff0000">
+    <button class="primary" id="sendColor" style="width:100%;margin-top:12px" disabled>SEND COLOR TO LIGHTS</button>
+  </div>
+
+  <div class="footer">MALIBU RGB STUDIO · CONCEPT 003</div>
 </div>
 
 <script>
@@ -105,6 +123,7 @@ const colorInputs=[...document.querySelectorAll('.color')];
 const speed=document.getElementById('speed');
 const brightness=document.getElementById('brightness');
 const playButton=document.getElementById('play');
+
 const colors=()=>colorInputs.map(input=>input.value);
 
 let playing=false;
@@ -120,6 +139,7 @@ function hexToRgb(hex){
   b:parseInt(hex.slice(5,7),16)
  };
 }
+
 function mix(a,b,t){
  const A=hexToRgb(a),B=hexToRgb(b);
  const r=Math.round(A.r+(B.r-A.r)*t);
@@ -127,6 +147,7 @@ function mix(a,b,t){
  const bl=Math.round(A.b+(B.b-A.b)*t);
  return `rgb(${r},${g},${bl})`;
 }
+
 function render(){
  const list=colors();
  const count=list.length;
@@ -138,6 +159,7 @@ function render(){
  document.getElementById('currentColor').textContent=
   `COLOR ${Math.min(Math.floor(scaled)+1,count)} OF ${count}`;
 }
+
 function animate(timestamp){
  if(!playing)return;
  if(lastTime===0)lastTime=timestamp;
@@ -150,6 +172,7 @@ function animate(timestamp){
  render();
  animationFrame=requestAnimationFrame(animate);
 }
+
 function stop(){
  playing=false;
  cancelAnimationFrame(animationFrame);
@@ -157,6 +180,7 @@ function stop(){
  playButton.textContent='▶ PLAY';
  document.getElementById('playStatus').textContent='PAUSED';
 }
+
 playButton.addEventListener('click',()=>{
  if(playing){stop();return;}
  playing=true;
@@ -165,6 +189,7 @@ playButton.addEventListener('click',()=>{
  document.getElementById('playStatus').textContent='PLAYING';
  animationFrame=requestAnimationFrame(animate);
 });
+
 document.getElementById('reverse').addEventListener('click',()=>{
  reversed=!reversed;
  stop();
@@ -172,27 +197,33 @@ document.getElementById('reverse').addEventListener('click',()=>{
  render();
  document.getElementById('playStatus').textContent=reversed?'REVERSED':'READY';
 });
+
 colorInputs.forEach(input=>input.addEventListener('input',()=>{
  stop();progress=0;render();
 }));
+
 speed.addEventListener('input',()=>{
  document.getElementById('speedValue').textContent=speed.value+' seconds';
 });
+
 brightness.addEventListener('input',()=>{
  document.getElementById('brightnessValue').textContent=brightness.value+'%';
  render();
 });
+
 function loadPreset(list){
  stop();
  colorInputs.forEach((input,i)=>input.value=list[i]);
  progress=0;render();
 }
+
 function saveScene(){
  try{
   localStorage.setItem('malibuColors',JSON.stringify(colors()));
   alert('Your color sequence has been saved!');
  }catch(e){alert('Saving is unavailable in this browser.');}
 }
+
 function loadSaved(){
  try{
   const saved=JSON.parse(localStorage.getItem('malibuColors'));
@@ -200,150 +231,129 @@ function loadSaved(){
   loadPreset(saved);
  }catch(e){alert('Could not load your saved colors.');}
 }
+
 render();
+
+/* BLUETOOTH HARDWARE CONTROL */
+
+const serviceId="0000fff0-0000-1000-8000-00805f9b34fb";
+const writeId="0000fff3-0000-1000-8000-00805f9b34fb";
+const notifyId="0000fff4-0000-1000-8000-00805f9b34fb";
+
+const bleConnect=document.getElementById('bleConnect');
+const bleDisconnect=document.getElementById('bleDisconnect');
+const sendColor=document.getElementById('sendColor');
+const bleStatus=document.getElementById('ble-status');
+
+let bleDevice=null;
+let writeCharacteristic=null;
+
+function bleMessage(message){
+ bleStatus.textContent=message;
+}
+
+function bleDisconnected(){
+ writeCharacteristic=null;
+ bleConnect.disabled=false;
+ bleDisconnect.disabled=true;
+ sendColor.disabled=true;
+ bleMessage('Disconnected from lights.');
+ document.getElementById('topStatus').textContent='● DISCONNECTED';
+}
+
+async function connectLights(){
+ try{
+  if(!navigator.bluetooth){
+   bleMessage('Bluetooth is unavailable. Open this site in Bluefy.');
+   return;
+  }
+
+  bleConnect.disabled=true;
+  bleMessage('Searching for ELK-BLEDDM...');
+
+  bleDevice=await navigator.bluetooth.requestDevice({
+   filters:[
+    {namePrefix:'ELK-'},
+    {namePrefix:'BLEDDM'}
+   ],
+   optionalServices:[serviceId]
+  });
+
+  bleDevice.addEventListener('gattserverdisconnected',bleDisconnected);
+
+  bleMessage('Connecting to '+bleDevice.name+'...');
+
+  const server=await bleDevice.gatt.connect();
+  const service=await server.getPrimaryService(serviceId);
+
+  writeCharacteristic=await service.getCharacteristic(writeId);
+
+  try{
+   const notify=await service.getCharacteristic(notifyId);
+   await notify.startNotifications();
+  }catch(e){
+   console.log('Notifications unavailable:',e);
+  }
+
+  bleConnect.disabled=true;
+  bleDisconnect.disabled=false;
+  sendColor.disabled=false;
+  document.getElementById('topStatus').textContent='● LIGHTS CONNECTED';
+  bleMessage('Connected to '+bleDevice.name+'. Ready for color test.');
+
+ }catch(error){
+  console.error(error);
+  bleMessage('Connection error: '+error.message);
+  bleConnect.disabled=false;
+ }
+}
+
+async function transmitColor(hex){
+ if(!writeCharacteristic){
+  bleMessage('Connect to your lights first.');
+  return;
+ }
+
+ const rgb=hexToRgb(hex);
+
+ const frame=new Uint8Array([
+  0x7E,
+  0x07,
+  0x05,
+  0x03,
+  rgb.r,
+  rgb.g,
+  rgb.b,
+  0x10,
+  0xEF
+ ]);
+
+ await writeCharacteristic.writeValueWithoutResponse(frame);
+}
+
+sendColor.addEventListener('click',async()=>{
+ try{
+  sendColor.disabled=true;
+  const selected=document.getElementById('hardwareColor').value;
+  await transmitColor(selected);
+  bleMessage('Color command sent: '+selected+'. Check your lights.');
+ }catch(error){
+  console.error(error);
+  bleMessage('Send failed: '+error.message);
+ }finally{
+  sendColor.disabled=!writeCharacteristic;
+ }
+});
+
+bleConnect.addEventListener('click',connectLights);
+
+bleDisconnect.addEventListener('click',()=>{
+ if(bleDevice && bleDevice.gatt.connected){
+  bleDevice.gatt.disconnect();
+ }else{
+  bleDisconnected();
+ }
+});
 </script>
-
-<style>
-  #ble-panel {
-    margin: 24px auto;
-    padding: 18px;
-    max-width: 520px;
-    background: #17191f;
-    border: 1px solid #343741;
-    border-radius: 16px;
-    color: white;
-    font-family: Arial, sans-serif;
-  }
-  #ble-panel button {
-    padding: 13px 18px;
-    margin: 8px 6px 8px 0;
-    border: 0;
-    border-radius: 9px;
-    background: #e6e8ef;
-    color: #111;
-    font-weight: bold;
-  }
-  #ble-status {
-    color: #aeb8c8;
-    margin-top: 12px;
-    font-size: 14px;
-  }
-</style>
-
-<section id="ble-panel">
-  <h2>Malibu Bluetooth</h2>
-  <p>Connect your ELK-BLEDDM lighting controller.</p>
-  <button id="ble-connect">Connect to Lights</button>
-  <button id="ble-disconnect" disabled>Disconnect</button>
-  <div id="ble-status">Status: Not connected</div>
-</section>
-
-<script>
-(() => {
-  const serviceId = "0000fff0-0000-1000-8000-00805f9b34fb";
-  const writeId = "0000fff3-0000-1000-8000-00805f9b34fb";
-  const notifyId = "0000fff4-0000-1000-8000-00805f9b34fb";
-
-  const connectButton = document.getElementById("ble-connect");
-  const disconnectButton = document.getElementById("ble-disconnect");
-  const status = document.getElementById("ble-status");
-
-  let device = null;
-  let server = null;
-  let writeCharacteristic = null;
-  let notifyCharacteristic = null;
-
-  function showStatus(message) {
-    status.textContent = "Status: " + message;
-  }
-
-  function disconnected() {
-    server = null;
-    writeCharacteristic = null;
-    notifyCharacteristic = null;
-    connectButton.disabled = false;
-    disconnectButton.disabled = true;
-    showStatus("Disconnected");
-  }
-
-  async function connect() {
-    try {
-      if (!navigator.bluetooth) {
-        showStatus("Bluetooth unavailable. Open this website in Bluefy.");
-        return;
-      }
-
-      connectButton.disabled = true;
-      showStatus("Searching for ELK-BLEDDM...");
-
-      device = await navigator.bluetooth.requestDevice({
-        filters: [
-          { namePrefix: "ELK-" },
-          { namePrefix: "BLEDDM" }
-        ],
-        optionalServices: [serviceId]
-      });
-
-      device.addEventListener(
-        "gattserverdisconnected",
-        disconnected
-      );
-
-      showStatus("Device selected. Connecting...");
-
-      server = await device.gatt.connect();
-
-      const service = await server.getPrimaryService(serviceId);
-
-      writeCharacteristic =
-        await service.getCharacteristic(writeId);
-
-      try {
-        notifyCharacteristic =
-          await service.getCharacteristic(notifyId);
-
-        await notifyCharacteristic.startNotifications();
-
-        notifyCharacteristic.addEventListener(
-          "characteristicvaluechanged",
-          event => {
-            const bytes = Array.from(
-              new Uint8Array(event.target.value.buffer)
-            );
-
-            console.log("Controller notification:", bytes);
-          }
-        );
-      } catch (notificationError) {
-        console.log("Notifications unavailable:", notificationError);
-      }
-
-      showStatus(
-        "Connected to " + device.name +
-        " | FFF3 write channel ready"
-      );
-
-      disconnectButton.disabled = false;
-
-    } catch (error) {
-      console.error(error);
-      showStatus("Connection failed: " + error.message);
-      connectButton.disabled = false;
-    }
-  }
-
-  function disconnect() {
-    if (device && device.gatt.connected) {
-      device.gatt.disconnect();
-    } else {
-      disconnected();
-    }
-  }
-
-  connectButton.addEventListener("click", connect);
-  disconnectButton.addEventListener("click", disconnect);
-})();
-</script>
-
 </body>
 </html>
