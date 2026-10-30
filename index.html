@@ -3,7 +3,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#080a10">
 <title>Malibu RGB Studio</title>
 <style>
@@ -34,16 +34,16 @@ button:active{opacity:.75}
 .preset{padding:13px 0;border-bottom:1px solid #262d3a;display:flex;justify-content:space-between;align-items:center;font-size:12px}
 .preset:last-child{border:0}
 .preset button{padding:9px 12px;font-size:11px}
-.footer{text-align:center;color:#60697a;font-size:10px;margin-top:28px;letter-spacing:2px}
 #ble-status{font-size:12px;color:#aeb8c9;margin-top:14px;line-height:1.5}
 #hardwareColor{width:100%;height:60px;margin-top:15px}
+.footer{text-align:center;color:#60697a;font-size:10px;margin-top:28px;letter-spacing:2px}
 </style>
 </head>
 <body>
 <div class="app">
   <div class="top">
     <div class="logo">MALIBU / RGB STUDIO</div>
-    <div class="status" id="topStatus">● PROTOTYPE 03</div>
+    <div class="status" id="topStatus">● DISCONNECTED</div>
   </div>
 
   <h1>Lighting Studio.</h1>
@@ -51,10 +51,10 @@ button:active{opacity:.75}
 
   <div class="card">
     <div class="title">Ambient preview</div>
-    <div class="muted" id="sequenceName">CUSTOM SEQUENCE 01</div>
+    <div class="muted">CUSTOM SEQUENCE 01</div>
     <div class="preview" id="preview"></div>
     <div class="preview-label">
-      <span id="currentColor">BLUE</span>
+      <span id="currentColor">COLOR 01</span>
       <span id="playStatus">READY</span>
     </div>
     <div class="buttons">
@@ -78,7 +78,7 @@ button:active{opacity:.75}
   <div class="card">
     <div class="title">Transition controls</div>
     <div class="control">
-      <div class="control-head"><span>Fade duration</span><span class="value" id="speedValue">4 seconds</span></div>
+      <div class="control-head"><span>Fade duration per color</span><span class="value" id="speedValue">4 seconds</span></div>
       <input id="speed" type="range" min="1" max="30" value="4">
     </div>
     <div class="control">
@@ -99,22 +99,22 @@ button:active{opacity:.75}
     </div>
   </div>
 
-  <div class="card" id="bluetooth">
+  <div class="card">
     <div class="title">Malibu Bluetooth Control</div>
-    <div class="muted">CONNECT TO YOUR ACTUAL LIGHTS</div>
+    <div class="muted">CONTROL YOUR ACTUAL LIGHTS</div>
     <div class="buttons">
       <button class="primary" id="bleConnect">CONNECT TO LIGHTS</button>
       <button id="bleDisconnect" disabled>DISCONNECT</button>
     </div>
     <div id="ble-status">Not connected</div>
     <hr style="border-color:#262d3a;margin:20px 0">
-    <div class="title">Hardware color test</div>
-    <div class="muted">CHOOSE A COLOR TO SEND TO YOUR MALIBU</div>
+    <div class="title">Manual color control</div>
+    <div class="muted">CHOOSE A COLOR TO SEND DIRECTLY</div>
     <input id="hardwareColor" type="color" value="#ff0000">
     <button class="primary" id="sendColor" style="width:100%;margin-top:12px" disabled>SEND COLOR TO LIGHTS</button>
   </div>
 
-  <div class="footer">MALIBU RGB STUDIO · CONCEPT 003</div>
+  <div class="footer">MALIBU RGB STUDIO · CONCEPT 004</div>
 </div>
 
 <script>
@@ -131,6 +131,8 @@ let reversed=false;
 let progress=0;
 let lastTime=0;
 let animationFrame=null;
+let lastHardwareSend=0;
+let hardwareBusy=false;
 
 function hexToRgb(hex){
  return {
@@ -142,38 +144,31 @@ function hexToRgb(hex){
 
 function mix(a,b,t){
  const A=hexToRgb(a),B=hexToRgb(b);
+ return `rgb(${Math.round(A.r+(B.r-A.r)*t)},${Math.round(A.g+(B.g-A.g)*t)},${Math.round(A.b+(B.b-A.b)*t)})`;
+}
+
+function currentHex(){
+ const list=colors();
+ const scaled=progress*list.length;
+ const index=Math.floor(scaled)%list.length;
+ const next=(index+1)%list.length;
+ const t=scaled-Math.floor(scaled);
+ const A=hexToRgb(list[index]);
+ const B=hexToRgb(list[next]);
  const r=Math.round(A.r+(B.r-A.r)*t);
  const g=Math.round(A.g+(B.g-A.g)*t);
- const bl=Math.round(A.b+(B.b-A.b)*t);
- return `rgb(${r},${g},${bl})`;
+ const b=Math.round(A.b+(B.b-A.b)*t);
+ return '#'+[r,g,b].map(v=>v.toString(16).padStart(2,'0')).join('');
 }
 
 function render(){
- const list=colors();
- const count=list.length;
- const scaled=progress*(count-1);
- const index=Math.min(Math.floor(scaled),count-2);
- const color=mix(list[index],list[index+1],scaled-index);
- preview.style.background=color;
+ preview.style.background=currentHex();
  preview.style.filter=`brightness(${brightness.value}%)`;
- document.getElementById('currentColor').textContent=
-  `COLOR ${Math.min(Math.floor(scaled)+1,count)} OF ${count}`;
+ const index=Math.floor(progress*colors().length)%colors().length;
+ document.getElementById('currentColor').textContent=`COLOR ${index+1} OF 5`;
 }
 
-function animate(timestamp){
- if(!playing)return;
- if(lastTime===0)lastTime=timestamp;
- const elapsed=(timestamp-lastTime)/1000;
- lastTime=timestamp;
- const total=speed.value*colors().length;
- progress+=elapsed/total*(reversed?-1:1);
- if(progress>=1)progress=0;
- if(progress<0)progress=1;
- render();
- animationFrame=requestAnimationFrame(animate);
-}
-
-function stop(){
+function setStopped(){
  playing=false;
  cancelAnimationFrame(animationFrame);
  lastTime=0;
@@ -181,25 +176,76 @@ function stop(){
  document.getElementById('playStatus').textContent='PAUSED';
 }
 
-playButton.addEventListener('click',()=>{
- if(playing){stop();return;}
+async function transmitColor(hex){
+ if(!writeCharacteristic || hardwareBusy)return;
+ hardwareBusy=true;
+ try{
+  const rgb=hexToRgb(hex);
+  const level=Number(brightness.value)/100;
+  const frame=new Uint8Array([
+   0x7E,0x07,0x05,0x03,
+   Math.round(rgb.r*level),
+   Math.round(rgb.g*level),
+   Math.round(rgb.b*level),
+   0x10,0xEF
+  ]);
+  await writeCharacteristic.writeValueWithoutResponse(frame);
+ }catch(error){
+  console.error(error);
+  bleMessage('Hardware update failed: '+error.message);
+ }finally{
+  hardwareBusy=false;
+ }
+}
+
+function animate(timestamp){
+ if(!playing)return;
+ if(!lastTime)lastTime=timestamp;
+ const elapsed=Math.min((timestamp-lastTime)/1000,0.1);
+ lastTime=timestamp;
+
+ const direction=reversed?-1:1;
+ progress+=elapsed/(Number(speed.value)*colors().length)*direction;
+ progress=(progress%1+1)%1;
+
+ render();
+
+ if(writeCharacteristic && timestamp-lastHardwareSend>=100 && !hardwareBusy){
+  lastHardwareSend=timestamp;
+  transmitColor(currentHex());
+ }
+
+ animationFrame=requestAnimationFrame(animate);
+}
+
+function startAnimation(){
+ if(playing)return;
  playing=true;
  lastTime=0;
  playButton.textContent='Ⅱ PAUSE';
  document.getElementById('playStatus').textContent='PLAYING';
  animationFrame=requestAnimationFrame(animate);
+}
+
+playButton.addEventListener('click',()=>{
+ if(playing){
+  setStopped();
+  return;
+ }
+ startAnimation();
 });
 
 document.getElementById('reverse').addEventListener('click',()=>{
  reversed=!reversed;
- stop();
- progress=0;
- render();
- document.getElementById('playStatus').textContent=reversed?'REVERSED':'READY';
+ document.getElementById('playStatus').textContent=reversed?'REVERSE':'FORWARD';
+ if(playing){
+  setStopped();
+ }
 });
 
 colorInputs.forEach(input=>input.addEventListener('input',()=>{
- stop();progress=0;render();
+ render();
+ if(writeCharacteristic && !playing)transmitColor(currentHex());
 }));
 
 speed.addEventListener('input',()=>{
@@ -209,12 +255,15 @@ speed.addEventListener('input',()=>{
 brightness.addEventListener('input',()=>{
  document.getElementById('brightnessValue').textContent=brightness.value+'%';
  render();
+ if(writeCharacteristic && !playing)transmitColor(currentHex());
 });
 
 function loadPreset(list){
- stop();
+ setStopped();
  colorInputs.forEach((input,i)=>input.value=list[i]);
- progress=0;render();
+ progress=0;
+ render();
+ if(writeCharacteristic)transmitColor(currentHex());
 }
 
 function saveScene(){
@@ -234,11 +283,11 @@ function loadSaved(){
 
 render();
 
-/* BLUETOOTH HARDWARE CONTROL */
+/* BLUETOOTH CONNECTION */
 
-const serviceId="0000fff0-0000-1000-8000-00805f9b34fb";
-const writeId="0000fff3-0000-1000-8000-00805f9b34fb";
-const notifyId="0000fff4-0000-1000-8000-00805f9b34fb";
+const serviceId='0000fff0-0000-1000-8000-00805f9b34fb';
+const writeId='0000fff3-0000-1000-8000-00805f9b34fb';
+const notifyId='0000fff4-0000-1000-8000-00805f9b34fb';
 
 const bleConnect=document.getElementById('bleConnect');
 const bleDisconnect=document.getElementById('bleDisconnect');
@@ -254,17 +303,18 @@ function bleMessage(message){
 
 function bleDisconnected(){
  writeCharacteristic=null;
+ setStopped();
  bleConnect.disabled=false;
  bleDisconnect.disabled=true;
  sendColor.disabled=true;
- bleMessage('Disconnected from lights.');
  document.getElementById('topStatus').textContent='● DISCONNECTED';
+ bleMessage('Disconnected from lights.');
 }
 
 async function connectLights(){
  try{
   if(!navigator.bluetooth){
-   bleMessage('Bluetooth is unavailable. Open this site in Bluefy.');
+   bleMessage('Bluetooth unavailable. Open this website in Bluefy.');
    return;
   }
 
@@ -281,8 +331,6 @@ async function connectLights(){
 
   bleDevice.addEventListener('gattserverdisconnected',bleDisconnected);
 
-  bleMessage('Connecting to '+bleDevice.name+'...');
-
   const server=await bleDevice.gatt.connect();
   const service=await server.getPrimaryService(serviceId);
 
@@ -291,15 +339,15 @@ async function connectLights(){
   try{
    const notify=await service.getCharacteristic(notifyId);
    await notify.startNotifications();
-  }catch(e){
-   console.log('Notifications unavailable:',e);
+  }catch(error){
+   console.log('Notifications unavailable',error);
   }
 
   bleConnect.disabled=true;
   bleDisconnect.disabled=false;
   sendColor.disabled=false;
   document.getElementById('topStatus').textContent='● LIGHTS CONNECTED';
-  bleMessage('Connected to '+bleDevice.name+'. Ready for color test.');
+  bleMessage('Connected to '+bleDevice.name+'. Hardware animation ready.');
 
  }catch(error){
   console.error(error);
@@ -308,40 +356,13 @@ async function connectLights(){
  }
 }
 
-async function transmitColor(hex){
- if(!writeCharacteristic){
-  bleMessage('Connect to your lights first.');
-  return;
- }
-
- const rgb=hexToRgb(hex);
-
- const frame=new Uint8Array([
-  0x7E,
-  0x07,
-  0x05,
-  0x03,
-  rgb.r,
-  rgb.g,
-  rgb.b,
-  0x10,
-  0xEF
- ]);
-
- await writeCharacteristic.writeValueWithoutResponse(frame);
-}
-
 sendColor.addEventListener('click',async()=>{
  try{
-  sendColor.disabled=true;
   const selected=document.getElementById('hardwareColor').value;
   await transmitColor(selected);
-  bleMessage('Color command sent: '+selected+'. Check your lights.');
+  bleMessage('Manual color sent: '+selected);
  }catch(error){
-  console.error(error);
   bleMessage('Send failed: '+error.message);
- }finally{
-  sendColor.disabled=!writeCharacteristic;
  }
 });
 
