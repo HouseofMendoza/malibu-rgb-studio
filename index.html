@@ -1,0 +1,83 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Malibu RGB Studio</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#080a10;color:#f5f6fa;font-family:-apple-system,BlinkMacSystemFont,sans-serif}
+.app{max-width:430px;margin:auto;padding:25px 20px 40px}
+.top{display:flex;justify-content:space-between;align-items:center}
+.logo{font-size:12px;letter-spacing:2px;color:#aeb7c9}
+.status{color:#67e6b2;font-size:10px}
+h1{font-size:30px;margin:30px 0 5px;letter-spacing:-1px}
+.sub{color:#81899a;font-size:13px}
+.card{background:#131722;border:1px solid #242b3b;border-radius:19px;padding:19px;margin-top:20px}
+.title{font-size:15px;font-weight:650}
+.muted{color:#858da0;font-size:11px;margin-top:6px}
+.preview{height:135px;border-radius:13px;background:linear-gradient(100deg,#086bff,#792cff,#f52ca8,#ff3030,#00d9a0);margin-top:18px;box-shadow:0 0 35px #4b43c855}
+.colors{display:flex;gap:9px;margin-top:18px}
+.swatch{height:39px;flex:1;border-radius:10px;border:2px solid #ffffff20}
+.blue{background:#086bff}.purple{background:#792cff}.pink{background:#f52ca8}.red{background:#ff3030}.green{background:#00d9a0}
+.timeline{display:flex;gap:5px;margin-top:16px}
+.segment{flex:1;height:8px;border-radius:9px}
+.row{display:flex;justify-content:space-between;font-size:12px;margin-top:22px}
+.value{color:#8e9dff}
+input{width:100%;accent-color:#818cff;margin-top:13px}
+.preset{display:flex;justify-content:space-between;align-items:center;padding:15px 0;border-bottom:1px solid #262d3a;font-size:13px}
+.preset:last-child{border:0}
+.dot{width:24px;height:24px;border-radius:50%}
+.button{background:#747cff;color:white;text-align:center;padding:16px;border-radius:13px;font-weight:650;margin-top:20px;font-size:13px}
+.footer{text-align:center;color:#60697a;font-size:10px;margin-top:28px;letter-spacing:2px}
+</style>
+</head>
+<body>
+<div class="app">
+<div class="top">
+<div class="logo">MALIBU / RGB STUDIO</div>
+<div class="status">● DESIGN MODE</div>
+</div>
+<h1>Lighting Studio.</h1>
+<div class="sub">Your colors. Your atmosphere. Your rules.</div>
+
+<div class="card">
+<div class="title">Ambient preview</div>
+<div class="muted">CUSTOM SEQUENCE 01</div>
+<div class="preview"></div>
+<div class="muted">BLUE → PURPLE → PINK → RED → GREEN</div>
+</div>
+
+<div class="card">
+<div class="title">Color sequence</div>
+<div class="muted">FIVE CUSTOM COLOR STOPS</div>
+<div class="colors">
+<div class="swatch blue"></div><div class="swatch purple"></div><div class="swatch pink"></div><div class="swatch red"></div><div class="swatch green"></div>
+</div>
+<div class="timeline">
+<div class="segment blue"></div><div class="segment purple"></div><div class="segment pink"></div><div class="segment red"></div><div class="segment green"></div>
+</div>
+</div>
+
+<div class="card">
+<div class="title">Transition controls</div>
+<div class="row"><span>Fade duration</span><span class="value">4 seconds</span></div>
+<input type="range" min="1" max="30" value="4">
+<div class="row"><span>Brightness</span><span class="value">80%</span></div>
+<input type="range" min="0" max="100" value="80">
+<div class="row"><span>Color smoothness</span><span class="value">Smooth</span></div>
+<input type="range" min="0" max="100" value="85">
+</div>
+
+<div class="card">
+<div class="title">Saved atmospheres</div>
+<div class="preset"><span>Midnight Blue</span><span class="dot" style="background:linear-gradient(135deg,#002cff,#15105d)"></span></div>
+<div class="preset"><span>Purple Haze</span><span class="dot" style="background:linear-gradient(135deg,#a020f0,#ff37a8)"></span></div>
+<div class="preset"><span>Miami Nights</span><span class="dot" style="background:linear-gradient(135deg,#00d9ff,#ff35c5)"></span></div>
+<div class="preset"><span>Redline</span><span class="dot" style="background:linear-gradient(135deg,#ff1010,#ff9b25)"></span></div>
+</div>
+<div class="button">＋ CREATE NEW SEQUENCE</div>
+<div class="footer">MALIBU RGB STUDIO · CONCEPT 001</div>
+</div>
+</body>
+</html>
