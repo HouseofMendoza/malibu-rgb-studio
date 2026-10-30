@@ -202,5 +202,148 @@ function loadSaved(){
 }
 render();
 </script>
+
+<style>
+  #ble-panel {
+    margin: 24px auto;
+    padding: 18px;
+    max-width: 520px;
+    background: #17191f;
+    border: 1px solid #343741;
+    border-radius: 16px;
+    color: white;
+    font-family: Arial, sans-serif;
+  }
+  #ble-panel button {
+    padding: 13px 18px;
+    margin: 8px 6px 8px 0;
+    border: 0;
+    border-radius: 9px;
+    background: #e6e8ef;
+    color: #111;
+    font-weight: bold;
+  }
+  #ble-status {
+    color: #aeb8c8;
+    margin-top: 12px;
+    font-size: 14px;
+  }
+</style>
+
+<section id="ble-panel">
+  <h2>Malibu Bluetooth</h2>
+  <p>Connect your ELK-BLEDDM lighting controller.</p>
+  <button id="ble-connect">Connect to Lights</button>
+  <button id="ble-disconnect" disabled>Disconnect</button>
+  <div id="ble-status">Status: Not connected</div>
+</section>
+
+<script>
+(() => {
+  const serviceId = "0000fff0-0000-1000-8000-00805f9b34fb";
+  const writeId = "0000fff3-0000-1000-8000-00805f9b34fb";
+  const notifyId = "0000fff4-0000-1000-8000-00805f9b34fb";
+
+  const connectButton = document.getElementById("ble-connect");
+  const disconnectButton = document.getElementById("ble-disconnect");
+  const status = document.getElementById("ble-status");
+
+  let device = null;
+  let server = null;
+  let writeCharacteristic = null;
+  let notifyCharacteristic = null;
+
+  function showStatus(message) {
+    status.textContent = "Status: " + message;
+  }
+
+  function disconnected() {
+    server = null;
+    writeCharacteristic = null;
+    notifyCharacteristic = null;
+    connectButton.disabled = false;
+    disconnectButton.disabled = true;
+    showStatus("Disconnected");
+  }
+
+  async function connect() {
+    try {
+      if (!navigator.bluetooth) {
+        showStatus("Bluetooth unavailable. Open this website in Bluefy.");
+        return;
+      }
+
+      connectButton.disabled = true;
+      showStatus("Searching for ELK-BLEDDM...");
+
+      device = await navigator.bluetooth.requestDevice({
+        filters: [
+          { namePrefix: "ELK-" },
+          { namePrefix: "BLEDDM" }
+        ],
+        optionalServices: [serviceId]
+      });
+
+      device.addEventListener(
+        "gattserverdisconnected",
+        disconnected
+      );
+
+      showStatus("Device selected. Connecting...");
+
+      server = await device.gatt.connect();
+
+      const service = await server.getPrimaryService(serviceId);
+
+      writeCharacteristic =
+        await service.getCharacteristic(writeId);
+
+      try {
+        notifyCharacteristic =
+          await service.getCharacteristic(notifyId);
+
+        await notifyCharacteristic.startNotifications();
+
+        notifyCharacteristic.addEventListener(
+          "characteristicvaluechanged",
+          event => {
+            const bytes = Array.from(
+              new Uint8Array(event.target.value.buffer)
+            );
+
+            console.log("Controller notification:", bytes);
+          }
+        );
+      } catch (notificationError) {
+        console.log("Notifications unavailable:", notificationError);
+      }
+
+      showStatus(
+        "Connected to " + device.name +
+        " | FFF3 write channel ready"
+      );
+
+      disconnectButton.disabled = false;
+
+    } catch (error) {
+      console.error(error);
+      showStatus("Connection failed: " + error.message);
+      connectButton.disabled = false;
+    }
+  }
+
+  function disconnect() {
+    if (device && device.gatt.connected) {
+      device.gatt.disconnect();
+    } else {
+      disconnected();
+    }
+  }
+
+  connectButton.addEventListener("click", connect);
+  disconnectButton.addEventListener("click", disconnect);
+})();
+</script>
+
 </body>
 </html>
