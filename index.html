@@ -2,82 +2,205 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+<meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#080a10">
 <title>Malibu RGB Studio</title>
 <style>
 *{box-sizing:border-box}
 body{margin:0;background:#080a10;color:#f5f6fa;font-family:-apple-system,BlinkMacSystemFont,sans-serif}
-.app{max-width:430px;margin:auto;padding:25px 20px 40px}
+.app{max-width:480px;margin:auto;padding:25px 20px 45px}
 .top{display:flex;justify-content:space-between;align-items:center}
-.logo{font-size:12px;letter-spacing:2px;color:#aeb7c9}
-.status{color:#67e6b2;font-size:10px}
-h1{font-size:30px;margin:30px 0 5px;letter-spacing:-1px}
-.sub{color:#81899a;font-size:13px}
+.logo{font-size:11px;letter-spacing:2px;color:#aeb7c9}
+.status{font-size:10px;color:#67e6b2}
+h1{font-size:30px;margin:32px 0 5px;letter-spacing:-1px}
+.sub,.muted{color:#858da0;font-size:12px}
 .card{background:#131722;border:1px solid #242b3b;border-radius:19px;padding:19px;margin-top:20px}
 .title{font-size:15px;font-weight:650}
-.muted{color:#858da0;font-size:11px;margin-top:6px}
-.preview{height:135px;border-radius:13px;background:linear-gradient(100deg,#086bff,#792cff,#f52ca8,#ff3030,#00d9a0);margin-top:18px;box-shadow:0 0 35px #4b43c855}
-.colors{display:flex;gap:9px;margin-top:18px}
-.swatch{height:39px;flex:1;border-radius:10px;border:2px solid #ffffff20}
-.blue{background:#086bff}.purple{background:#792cff}.pink{background:#f52ca8}.red{background:#ff3030}.green{background:#00d9a0}
-.timeline{display:flex;gap:5px;margin-top:16px}
-.segment{flex:1;height:8px;border-radius:9px}
-.row{display:flex;justify-content:space-between;font-size:12px;margin-top:22px}
-.value{color:#8e9dff}
-input{width:100%;accent-color:#818cff;margin-top:13px}
-.preset{display:flex;justify-content:space-between;align-items:center;padding:15px 0;border-bottom:1px solid #262d3a;font-size:13px}
+.preview{height:150px;border-radius:13px;margin-top:17px;background:#086bff;box-shadow:0 0 35px #4b43c855;transition:background .1s}
+.preview-label{display:flex;justify-content:space-between;margin-top:13px;color:#aeb7c9;font-size:10px}
+.colors{display:grid;grid-template-columns:repeat(5,1fr);gap:9px;margin-top:18px}
+.color-box{text-align:center;font-size:10px;color:#929bad}
+input[type=color]{width:100%;height:48px;border:2px solid #ffffff20;border-radius:10px;background:none;padding:2px;display:block;margin-bottom:7px}
+.control{margin-top:22px}
+.control-head{display:flex;justify-content:space-between;font-size:12px}
+.value{color:#9b9fff}
+input[type=range]{width:100%;accent-color:#818cff;margin-top:14px}
+.buttons{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:20px}
+button{border:0;border-radius:12px;padding:15px;font-size:13px;font-weight:650;background:#242b3b;color:white}
+.primary{background:#747cff;color:white}
+button:active{opacity:.75}
+.preset{padding:13px 0;border-bottom:1px solid #262d3a;display:flex;justify-content:space-between;align-items:center;font-size:12px}
 .preset:last-child{border:0}
-.dot{width:24px;height:24px;border-radius:50%}
-.button{background:#747cff;color:white;text-align:center;padding:16px;border-radius:13px;font-weight:650;margin-top:20px;font-size:13px}
+.preset button{padding:9px 12px;font-size:11px}
 .footer{text-align:center;color:#60697a;font-size:10px;margin-top:28px;letter-spacing:2px}
 </style>
 </head>
 <body>
 <div class="app">
-<div class="top">
-<div class="logo">MALIBU / RGB STUDIO</div>
-<div class="status">● DESIGN MODE</div>
-</div>
-<h1>Lighting Studio.</h1>
-<div class="sub">Your colors. Your atmosphere. Your rules.</div>
+  <div class="top">
+    <div class="logo">MALIBU / RGB STUDIO</div>
+    <div class="status">● PROTOTYPE 02</div>
+  </div>
 
-<div class="card">
-<div class="title">Ambient preview</div>
-<div class="muted">CUSTOM SEQUENCE 01</div>
-<div class="preview"></div>
-<div class="muted">BLUE → PURPLE → PINK → RED → GREEN</div>
+  <h1>Lighting Studio.</h1>
+  <div class="sub">Your colors. Your atmosphere. Your rules.</div>
+
+  <div class="card">
+    <div class="title">Ambient preview</div>
+    <div class="muted" id="sequenceName">CUSTOM SEQUENCE 01</div>
+    <div class="preview" id="preview"></div>
+    <div class="preview-label">
+      <span id="currentColor">BLUE</span>
+      <span id="playStatus">READY</span>
+    </div>
+    <div class="buttons">
+      <button class="primary" id="play">▶ PLAY</button>
+      <button id="reverse">↔ REVERSE</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="title">Color sequence</div>
+    <div class="muted">CHOOSE YOUR FIVE COLORS</div>
+    <div class="colors">
+      <label class="color-box"><input type="color" class="color" value="#086bff">COLOR 01</label>
+      <label class="color-box"><input type="color" class="color" value="#792cff">COLOR 02</label>
+      <label class="color-box"><input type="color" class="color" value="#f52ca8">COLOR 03</label>
+      <label class="color-box"><input type="color" class="color" value="#ff3030">COLOR 04</label>
+      <label class="color-box"><input type="color" class="color" value="#00d9a0">COLOR 05</label>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="title">Transition controls</div>
+    <div class="control">
+      <div class="control-head"><span>Fade duration</span><span class="value" id="speedValue">4 seconds</span></div>
+      <input id="speed" type="range" min="1" max="30" value="4">
+    </div>
+    <div class="control">
+      <div class="control-head"><span>Brightness</span><span class="value" id="brightnessValue">80%</span></div>
+      <input id="brightness" type="range" min="5" max="100" value="80">
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="title">Saved atmospheres</div>
+    <div class="preset"><span>Midnight Blue</span><button onclick="loadPreset(['#001b70','#075cff','#542cff','#080a30','#001b70'])">LOAD</button></div>
+    <div class="preset"><span>Purple Haze</span><button onclick="loadPreset(['#4a008c','#a020f0','#ff37a8','#792cff','#4a008c'])">LOAD</button></div>
+    <div class="preset"><span>Miami Nights</span><button onclick="loadPreset(['#00d9ff','#086bff','#a020f0','#ff35c5','#00d9ff'])">LOAD</button></div>
+    <div class="preset"><span>Redline</span><button onclick="loadPreset(['#ff1010','#ff5b00','#ff9b25','#8b0000','#ff1010'])">LOAD</button></div>
+    <div class="buttons">
+      <button class="primary" onclick="saveScene()">SAVE MY COLORS</button>
+      <button onclick="loadSaved()">LOAD MY COLORS</button>
+    </div>
+  </div>
+
+  <div class="footer">MALIBU RGB STUDIO · CONCEPT 002</div>
 </div>
 
-<div class="card">
-<div class="title">Color sequence</div>
-<div class="muted">FIVE CUSTOM COLOR STOPS</div>
-<div class="colors">
-<div class="swatch blue"></div><div class="swatch purple"></div><div class="swatch pink"></div><div class="swatch red"></div><div class="swatch green"></div>
-</div>
-<div class="timeline">
-<div class="segment blue"></div><div class="segment purple"></div><div class="segment pink"></div><div class="segment red"></div><div class="segment green"></div>
-</div>
-</div>
+<script>
+const preview=document.getElementById('preview');
+const colorInputs=[...document.querySelectorAll('.color')];
+const speed=document.getElementById('speed');
+const brightness=document.getElementById('brightness');
+const playButton=document.getElementById('play');
+const colors=()=>colorInputs.map(input=>input.value);
 
-<div class="card">
-<div class="title">Transition controls</div>
-<div class="row"><span>Fade duration</span><span class="value">4 seconds</span></div>
-<input type="range" min="1" max="30" value="4">
-<div class="row"><span>Brightness</span><span class="value">80%</span></div>
-<input type="range" min="0" max="100" value="80">
-<div class="row"><span>Color smoothness</span><span class="value">Smooth</span></div>
-<input type="range" min="0" max="100" value="85">
-</div>
+let playing=false;
+let reversed=false;
+let progress=0;
+let lastTime=0;
+let animationFrame=null;
 
-<div class="card">
-<div class="title">Saved atmospheres</div>
-<div class="preset"><span>Midnight Blue</span><span class="dot" style="background:linear-gradient(135deg,#002cff,#15105d)"></span></div>
-<div class="preset"><span>Purple Haze</span><span class="dot" style="background:linear-gradient(135deg,#a020f0,#ff37a8)"></span></div>
-<div class="preset"><span>Miami Nights</span><span class="dot" style="background:linear-gradient(135deg,#00d9ff,#ff35c5)"></span></div>
-<div class="preset"><span>Redline</span><span class="dot" style="background:linear-gradient(135deg,#ff1010,#ff9b25)"></span></div>
-</div>
-<div class="button">＋ CREATE NEW SEQUENCE</div>
-<div class="footer">MALIBU RGB STUDIO · CONCEPT 001</div>
-</div>
+function hexToRgb(hex){
+ return {
+  r:parseInt(hex.slice(1,3),16),
+  g:parseInt(hex.slice(3,5),16),
+  b:parseInt(hex.slice(5,7),16)
+ };
+}
+function mix(a,b,t){
+ const A=hexToRgb(a),B=hexToRgb(b);
+ const r=Math.round(A.r+(B.r-A.r)*t);
+ const g=Math.round(A.g+(B.g-A.g)*t);
+ const bl=Math.round(A.b+(B.b-A.b)*t);
+ return `rgb(${r},${g},${bl})`;
+}
+function render(){
+ const list=colors();
+ const count=list.length;
+ const scaled=progress*(count-1);
+ const index=Math.min(Math.floor(scaled),count-2);
+ const color=mix(list[index],list[index+1],scaled-index);
+ preview.style.background=color;
+ preview.style.filter=`brightness(${brightness.value}%)`;
+ document.getElementById('currentColor').textContent=
+  `COLOR ${Math.min(Math.floor(scaled)+1,count)} OF ${count}`;
+}
+function animate(timestamp){
+ if(!playing)return;
+ if(lastTime===0)lastTime=timestamp;
+ const elapsed=(timestamp-lastTime)/1000;
+ lastTime=timestamp;
+ const total=speed.value*colors().length;
+ progress+=elapsed/total*(reversed?-1:1);
+ if(progress>=1)progress=0;
+ if(progress<0)progress=1;
+ render();
+ animationFrame=requestAnimationFrame(animate);
+}
+function stop(){
+ playing=false;
+ cancelAnimationFrame(animationFrame);
+ lastTime=0;
+ playButton.textContent='▶ PLAY';
+ document.getElementById('playStatus').textContent='PAUSED';
+}
+playButton.addEventListener('click',()=>{
+ if(playing){stop();return;}
+ playing=true;
+ lastTime=0;
+ playButton.textContent='Ⅱ PAUSE';
+ document.getElementById('playStatus').textContent='PLAYING';
+ animationFrame=requestAnimationFrame(animate);
+});
+document.getElementById('reverse').addEventListener('click',()=>{
+ reversed=!reversed;
+ stop();
+ progress=0;
+ render();
+ document.getElementById('playStatus').textContent=reversed?'REVERSED':'READY';
+});
+colorInputs.forEach(input=>input.addEventListener('input',()=>{
+ stop();progress=0;render();
+}));
+speed.addEventListener('input',()=>{
+ document.getElementById('speedValue').textContent=speed.value+' seconds';
+});
+brightness.addEventListener('input',()=>{
+ document.getElementById('brightnessValue').textContent=brightness.value+'%';
+ render();
+});
+function loadPreset(list){
+ stop();
+ colorInputs.forEach((input,i)=>input.value=list[i]);
+ progress=0;render();
+}
+function saveScene(){
+ try{
+  localStorage.setItem('malibuColors',JSON.stringify(colors()));
+  alert('Your color sequence has been saved!');
+ }catch(e){alert('Saving is unavailable in this browser.');}
+}
+function loadSaved(){
+ try{
+  const saved=JSON.parse(localStorage.getItem('malibuColors'));
+  if(!saved){alert('No saved colors yet.');return;}
+  loadPreset(saved);
+ }catch(e){alert('Could not load your saved colors.');}
+}
+render();
+</script>
 </body>
 </html>
